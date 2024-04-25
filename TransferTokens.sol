@@ -17,8 +17,17 @@ contract TransferTokens {
     event CheckTokens(address account, uint256 tokensAccount); // Event emitted to check tokens of an external account
     event CreateTokens(uint256 newTokens, uint256 totalTokens); // Event emitted when new tokens are added
 
-    function transferTokens(address to, uint256 value) external payable {
-        require(fondos[msg.sender] > 0, "You have not enough tokens for this transaction"); // Check if the sender has enough tokens
+    modifier verifyTokens (uint256 value) {
+        require(fondos[msg.sender] > value, "You have not enough tokens for this transaction"); // Modifier to verify if the sender has enough tokens
+        _;
+    }
+    
+    modifier onlyOwner () {
+        require(msg.sender == owner, "Only owner can execute this operation"); // Modifier to allow only the owner to execute certain operations
+        _;
+    }
+
+    function transferTokens(address to, uint256 value) external payable verifyTokens(value) {
         fondos[msg.sender] -= value; // Deduct tokens from the sender
         fondos[to] += value; // Add tokens to the recipient
         emit Transfer(owner, to, value); // Emit transfer event
@@ -33,10 +42,9 @@ contract TransferTokens {
         return fondos[msg.sender]; // Return the balance of the sender
     }
 
-    function addTokens(uint newTokens) external payable {
-        if (msg.sender == owner) { // Check if the caller is the owner
-            fondos[owner] += newTokens; // Add new tokens to the owner's balance
-            emit CreateTokens(newTokens, fondos[owner]); // Emit event for new tokens creation
-        }
+    function addTokens(uint newTokens) external payable onlyOwner {
+        fondos[owner] += newTokens; // Add new tokens to the owner's balance
+        emit CreateTokens(newTokens, fondos[owner]); // Emit event for new tokens creation
     }
+
 }
